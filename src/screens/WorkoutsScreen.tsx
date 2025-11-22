@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,29 +6,60 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../constants/colors";
 import { Workout } from "../types";
 import { mockWorkouts } from "../data/mockWorkouts";
 import WorkoutCard from "../components/WorkoutCard";
+import { workoutStorage } from "../services/workoutStorage";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function WorkoutsScreen({ navigation }: any) {
-  const [workouts, setWorkouts] = useState<Workout[]>(mockWorkouts);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadWorkouts = async () => {
+    try {
+      setLoading(true);
+      // Initialize with mock data if first time
+      await workoutStorage.initializeWithMockData(mockWorkouts);
+      const data = await workoutStorage.getWorkouts();
+      setWorkouts(data);
+    } catch (error) {
+      Alert.alert("Error", "Failed to load workouts");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load workouts when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadWorkouts();
+    }, [])
+  );
 
   const handleWorkoutPress = (workout: Workout) => {
-    // TODO: Navigate to workout detail screen
-    Alert.alert("View Workout", `Opening details for: ${workout.name}`);
+    navigation.navigate("WorkoutDetail", { workout });
   };
 
   const handleStartWorkout = (workout: Workout) => {
-    // TODO: Navigate to active workout screen
-    Alert.alert("Start Workout", `Starting: ${workout.name}`);
+    navigation.navigate("ActiveWorkout", { workout });
   };
 
   const handleCreateWorkout = () => {
     navigation.navigate("CreateWorkout");
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -49,19 +80,33 @@ export default function WorkoutsScreen({ navigation }: any) {
       </View>
 
       {/* Workouts List */}
-      <FlatList
-        data={workouts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <WorkoutCard
-            workout={item}
-            onPress={() => handleWorkoutPress(item)}
-            onStart={() => handleStartWorkout(item)}
+      {workouts.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Ionicons
+            name="barbell-outline"
+            size={64}
+            color={Colors.textTertiary}
           />
-        )}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+          <Text style={styles.emptyText}>No workouts yet</Text>
+          <Text style={styles.emptySubtext}>
+            Create your first workout to get started
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={workouts}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <WorkoutCard
+              workout={item}
+              onPress={() => handleWorkoutPress(item)}
+              onStart={() => handleStartWorkout(item)}
+            />
+          )}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 }
@@ -70,6 +115,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  centerContent: {
+    justifyContent: "center",
+    alignItems: "center",
   },
   header: {
     flexDirection: "row",
@@ -100,5 +149,23 @@ const styles = StyleSheet.create({
   listContent: {
     padding: 16,
     paddingTop: 8,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 32,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: Colors.textSecondary,
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: Colors.textTertiary,
+    marginTop: 8,
+    textAlign: "center",
   },
 });

@@ -18,12 +18,14 @@ interface AddExerciseModalProps {
   visible: boolean;
   onClose: () => void;
   onAdd: (exercise: Omit<Exercise, "id">) => void;
+  onBrowseLibrary: () => void;
 }
 
 export default function AddExerciseModal({
   visible,
   onClose,
   onAdd,
+  onBrowseLibrary,
 }: AddExerciseModalProps) {
   const [name, setName] = useState("");
   const [sets, setSets] = useState("3");
@@ -53,6 +55,11 @@ export default function AddExerciseModal({
     onClose();
   };
 
+  const handleBrowseLibrary = () => {
+    onClose();
+    onBrowseLibrary();
+  };
+
   return (
     <Modal
       visible={visible}
@@ -78,6 +85,24 @@ export default function AddExerciseModal({
             </TouchableOpacity>
           </View>
 
+          {/* Browse Library Button */}
+          <TouchableOpacity
+            style={styles.libraryButton}
+            onPress={handleBrowseLibrary}
+          >
+            <Ionicons name="library-outline" size={20} color={Colors.primary} />
+            <Text style={styles.libraryButtonText}>
+              Browse Exercise Library
+            </Text>
+            <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
+          </TouchableOpacity>
+
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or add manually</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
           <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
             {/* Exercise Name */}
             <View style={styles.inputGroup}>
@@ -88,7 +113,6 @@ export default function AddExerciseModal({
                 onChangeText={setName}
                 placeholder="e.g., Bench Press"
                 placeholderTextColor={Colors.textTertiary}
-                autoFocus
               />
             </View>
 
@@ -194,8 +218,43 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 4,
   },
+  libraryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 20,
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: Colors.primary + "20",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  libraryButtonText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.primary,
+    marginLeft: 12,
+  },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 20,
+    marginVertical: 16,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.border,
+  },
+  dividerText: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
   form: {
-    padding: 20,
+    paddingHorizontal: 20,
   },
   inputGroup: {
     marginBottom: 20,

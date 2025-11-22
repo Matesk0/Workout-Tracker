@@ -7,18 +7,20 @@ import {
   TouchableOpacity,
   FlatList,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../constants/colors";
-import { Exercise } from "../types";
+import { Exercise, Workout } from "../types";
 import AddExerciseModal from "../components/AddExerciseModal";
 import { workoutStorage } from "../services/workoutStorage";
-import { ActivityIndicator } from "react-native";
 
-export default function CreateWorkoutScreen({ navigation }: any) {
-  const [workoutName, setWorkoutName] = useState("");
-  const [description, setDescription] = useState("");
-  const [exercises, setExercises] = useState<Exercise[]>([]);
+export default function EditWorkoutScreen({ route, navigation }: any) {
+  const { workout } = route.params as { workout: Workout };
+
+  const [workoutName, setWorkoutName] = useState(workout.name);
+  const [description, setDescription] = useState(workout.description || "");
+  const [exercises, setExercises] = useState<Exercise[]>(workout.exercises);
   const [modalVisible, setModalVisible] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -58,17 +60,17 @@ export default function CreateWorkoutScreen({ navigation }: any) {
 
     try {
       setSaving(true);
-      await workoutStorage.addWorkout({
+      await workoutStorage.updateWorkout(workout.id, {
         name: workoutName.trim(),
         description: description.trim() || undefined,
         exercises,
       });
 
-      Alert.alert("Success", "Workout saved!", [
+      Alert.alert("Success", "Workout updated!", [
         { text: "OK", onPress: () => navigation.goBack() },
       ]);
     } catch (error) {
-      Alert.alert("Error", "Failed to save workout. Please try again.");
+      Alert.alert("Error", "Failed to update workout. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -175,34 +177,16 @@ export default function CreateWorkoutScreen({ navigation }: any) {
           {saving ? (
             <ActivityIndicator color={Colors.text} />
           ) : (
-            <Text style={styles.saveButtonText}>Save Workout</Text>
+            <Text style={styles.saveButtonText}>Save Changes</Text>
           )}
         </TouchableOpacity>
       </View>
 
-      {/* AddExerciseModal (updated to use library browse flow) */}
+      {/* Add Exercise Modal */}
       <AddExerciseModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onAdd={handleAddExercise}
-        onBrowseLibrary={() => {
-          navigation.navigate("ProfileMain");
-          // Give time for navigation animation
-          setTimeout(() => {
-            navigation.navigate("ExerciseLibrary", {
-              selectionMode: true,
-              onSelectExercise: (exercise: any) => {
-                handleAddExercise({
-                  name: exercise.name,
-                  sets: 3,
-                  reps: 10,
-                  weight: undefined,
-                  notes: undefined,
-                });
-              },
-            });
-          }, 100);
-        }}
       />
     </View>
   );

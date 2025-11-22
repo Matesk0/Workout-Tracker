@@ -5,16 +5,24 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../constants/colors";
 
 import WorkoutLogsScreen from "../screens/WorkoutLogsScreen";
+import WorkoutLogDetailScreen from "../screens/WorkoutLogDetailScreen";
 import WorkoutsScreen from "../screens/WorkoutsScreen";
 import RecoveryScreen from "../screens/RecoveryScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import ThemeSettingsScreen from "../screens/ThemeSettingsScreen";
 import CreateWorkoutScreen from "../screens/CreateWorkoutScreen";
+import WorkoutDetailScreen from "../screens/WorkoutDetailScreen";
+import EditWorkoutScreen from "../screens/EditWorkoutScreen";
+import ActiveWorkoutScreen from "../screens/ActiveWorkoutScreen";
+import ExerciseLibraryScreen from "../screens/ExerciseLibraryScreen";
+import ExerciseDetailScreen from "../screens/ExerciseDetailScreen";
+import AddCustomExerciseScreen from "../screens/AddCustomExerciseScreen";
 
 const Tab = createBottomTabNavigator();
 const ProfileStack = createStackNavigator();
 const WorkoutsStack = createStackNavigator();
+const WorkoutLogsStack = createStackNavigator();
 
 function ProfileStackNavigator() {
   return (
@@ -48,6 +56,21 @@ function ProfileStackNavigator() {
         component={ThemeSettingsScreen}
         options={{ title: "Theme Colors" }}
       />
+      <ProfileStack.Screen
+        name="ExerciseLibrary"
+        component={ExerciseLibraryScreen}
+        options={{ title: "Exercise Library" }}
+      />
+      <ProfileStack.Screen
+        name="ExerciseDetail"
+        component={ExerciseDetailScreen}
+        options={{ title: "Exercise Details" }}
+      />
+      <ProfileStack.Screen
+        name="AddCustomExercise"
+        component={AddCustomExerciseScreen}
+        options={{ title: "Add Custom Exercise" }}
+      />
     </ProfileStack.Navigator>
   );
 }
@@ -79,7 +102,56 @@ function WorkoutsStackNavigator() {
         component={CreateWorkoutScreen}
         options={{ title: "Create Workout" }}
       />
+      <WorkoutsStack.Screen
+        name="WorkoutDetail"
+        component={WorkoutDetailScreen}
+        options={{ title: "Workout Details" }}
+      />
+      <WorkoutsStack.Screen
+        name="EditWorkout"
+        component={EditWorkoutScreen}
+        options={{ title: "Edit Workout" }}
+      />
+      <WorkoutsStack.Screen
+        name="ActiveWorkout"
+        component={ActiveWorkoutScreen}
+        options={{
+          headerShown: false,
+          gestureEnabled: false, // Prevent swipe back during workout
+        }}
+      />
     </WorkoutsStack.Navigator>
+  );
+}
+
+function WorkoutLogsStackNavigator() {
+  return (
+    <WorkoutLogsStack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: Colors.backgroundElevated,
+          borderBottomWidth: 0.5,
+          borderBottomColor: Colors.border,
+        },
+        headerTitleStyle: {
+          fontWeight: "600",
+          fontSize: 20,
+          color: Colors.text,
+        },
+        headerTintColor: Colors.primary,
+      }}
+    >
+      <WorkoutLogsStack.Screen
+        name="WorkoutLogsMain"
+        component={WorkoutLogsScreen}
+        options={{ headerShown: false }}
+      />
+      <WorkoutLogsStack.Screen
+        name="WorkoutLogDetail"
+        component={WorkoutLogDetailScreen}
+        options={{ title: "Workout Log" }}
+      />
+    </WorkoutLogsStack.Navigator>
   );
 }
 
@@ -113,9 +185,10 @@ export default function BottomTabNavigator() {
     >
       <Tab.Screen
         name="WorkoutLogs"
-        component={WorkoutLogsScreen}
+        component={WorkoutLogsStackNavigator} // Changed to use the stack navigator
         options={{
           title: "Logs",
+          headerShown: true,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="clipboard-outline" size={28} color={color} />
           ),
