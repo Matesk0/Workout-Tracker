@@ -5,98 +5,127 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert, // Add this
 } from "react-native";
-import { Colors } from "../constants/colors";
-import { colorSettings } from "../types/theme";
-import ColorPickerModal from "../components/ColorPickerModal";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors, DefaultThemes, Theme } from "../constants/colors";
+import { themeStorage } from "../services/themeStorage";
+import { useFocusEffect } from "@react-navigation/native";
 
-export default function ThemeSettingsScreen() {
-  const [colors, setColors] = useState(Colors);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedColorKey, setSelectedColorKey] = useState<
-    keyof typeof Colors | null
-  >(null);
-  const [selectedColorLabel, setSelectedColorLabel] = useState("");
+export default function ThemeSettingsScreen({ navigation }: any) {
+  const [activeTheme, setActiveTheme] = useState<Theme | null>(null);
 
-  const openColorPicker = (key: keyof typeof Colors, label: string) => {
-    setSelectedColorKey(key);
-    setSelectedColorLabel(label);
-    setModalVisible(true);
-  };
+  useFocusEffect(
+    React.useCallback(() => {
+      loadActiveTheme();
+    }, [])
+  );
 
-  const updateColor = (color: string) => {
-    if (selectedColorKey) {
-      setColors({ ...colors, [selectedColorKey]: color });
+  const loadActiveTheme = async () => {
+    try {
+      const theme = await themeStorage.getActiveTheme();
+      setActiveTheme(theme);
+    } catch (error) {
+      console.error("Error loading theme:", error);
     }
   };
 
-  const groupedSettings = colorSettings.reduce((acc, setting) => {
-    if (!acc[setting.category]) {
-      acc[setting.category] = [];
+  const handleSelectTheme = async (theme: Theme) => {
+    try {
+      await themeStorage.setActiveTheme(theme);
+      setActiveTheme(theme);
+      Alert.alert(
+        "Theme Changed",
+        "Please restart the app to apply the new theme.",
+        [{ text: "OK" }]
+      );
+    } catch (error) {
+      Alert.alert("Error", "Failed to save theme");
     }
-    acc[setting.category].push(setting);
-    return acc;
-  }, {} as Record<string, typeof colorSettings>);
+  };
 
   return (
-    <>
-      <ScrollView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>Customize your theme colors</Text>
-          <Text style={styles.headerSubtext}>Tap any color to change it</Text>
+    <View style={styles.container}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Info Card */}
+        <View style={styles.infoCard}>
+          <Ionicons
+            name="information-circle"
+            size={24}
+            color={Colors.primary}
+          />
+          <View style={styles.infoContent}>
+            <Text style={styles.infoTitle}>App Theme</Text>
+            <Text style={styles.infoText}>
+              Choose a theme for the app. You'll need to restart the app to see
+              the changes.
+            </Text>
+          </View>
         </View>
 
-        {Object.entries(groupedSettings).map(([category, settings]) => (
-          <View key={category} style={styles.section}>
-            <Text style={styles.sectionTitle}>{category}</Text>
-            <View style={styles.card}>
-              {settings.map((setting, index) => (
-                <TouchableOpacity
-                  key={setting.key}
-                  style={[
-                    styles.colorItem,
-                    index !== settings.length - 1 && styles.itemBorder,
-                  ]}
-                  onPress={() => openColorPicker(setting.key, setting.label)}
-                >
-                  <View style={styles.colorInfo}>
-                    <Text style={styles.colorLabel}>{setting.label}</Text>
-                    <View style={styles.colorValueContainer}>
-                      <View
-                        style={[
-                          styles.colorPreview,
-                          { backgroundColor: colors[setting.key] },
-                        ]}
-                      />
-                      <Text style={styles.colorValue}>
-                        {colors[setting.key].toUpperCase()}
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        ))}
+        {/* Theme Options */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Available Themes</Text>
+          {DefaultThemes.map((theme) => (
+            <TouchableOpacity
+              key={theme.id}
+              style={[
+                styles.themeCard,
+                activeTheme?.id === theme.id && styles.themeCardActive,
+              ]}
+              onPress={() => handleSelectTheme(theme)}
+            >
+              <View style={styles.themeHeader}>
+                <View style={styles.colorPreview}>
+                  <View
+                    style={[
+                      styles.colorDot,
+                      { backgroundColor: theme.colors.primary },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.colorDot,
+                      { backgroundColor: theme.colors.secondary },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.colorDot,
+                      { backgroundColor: theme.colors.accent },
+                    ]}
+                  />
+                </View>
+                <View style={styles.themeInfo}>
+                  <Text style={styles.themeName}>{theme.name}</Text>
+                  {activeTheme?.id === theme.id && (
+                    <Text style={styles.activeLabel}>Active</Text>
+                  )}
+                </View>
+                {activeTheme?.id === theme.id && (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={28}
+                    color={Colors.primary}
+                  />
+                )}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.resetButton}
-            onPress={() => setColors(Colors)}
-          >
-            <Text style={styles.resetButtonText}>Reset to Default</Text>
-          </TouchableOpacity>
+        {/* Coming Soon */}
+        <View style={styles.comingSoonCard}>
+          <Ionicons name="sparkles" size={32} color={Colors.primary} />
+          <View style={styles.comingSoonContent}>
+            <Text style={styles.comingSoonTitle}>Custom Themes</Text>
+            <Text style={styles.comingSoonText}>
+              Create your own custom color themes - coming soon!
+            </Text>
+          </View>
         </View>
       </ScrollView>
-
-      <ColorPickerModal
-        visible={modalVisible}
-        currentColor={selectedColorKey ? colors[selectedColorKey] : "#000000"}
-        colorLabel={selectedColorLabel}
-        onClose={() => setModalVisible(false)}
-        onSelectColor={updateColor}
-      />
-    </>
+    </View>
   );
 }
 
@@ -105,88 +134,107 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  header: {
-    padding: 16,
-    paddingTop: 8,
+  content: {
+    flex: 1,
   },
-  headerText: {
+  infoCard: {
+    flexDirection: "row",
+    gap: 16,
+    backgroundColor: Colors.primary + "10",
+    padding: 20,
+    margin: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.primary + "30",
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  infoText: {
     fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: 4,
-  },
-  headerSubtext: {
-    fontSize: 12,
-    color: Colors.textTertiary,
+    color: Colors.text,
+    lineHeight: 20,
+    opacity: 0.8,
   },
   section: {
-    marginTop: 24,
     paddingHorizontal: 16,
+    marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: Colors.textSecondary,
-    marginBottom: 8,
-    marginLeft: 4,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  card: {
-    backgroundColor: Colors.card,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  colorItem: {
-    padding: 16,
-  },
-  itemBorder: {
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
-  },
-  colorInfo: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  colorLabel: {
-    fontSize: 15,
+    fontSize: 18,
+    fontWeight: "700",
     color: Colors.text,
-    fontWeight: "500",
+    marginBottom: 16,
   },
-  colorValueContainer: {
+  themeCard: {
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: Colors.border,
+  },
+  themeCardActive: {
+    borderColor: Colors.primary,
+  },
+  themeHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 16,
   },
   colorPreview: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    flexDirection: "row",
+    gap: 8,
   },
-  colorValue: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    fontFamily: "monospace",
-    minWidth: 70,
-  },
-  footer: {
-    padding: 16,
-    paddingTop: 32,
-    paddingBottom: 48,
-  },
-  resetButton: {
-    backgroundColor: Colors.card,
+  colorDot: {
+    width: 24,
+    height: 24,
     borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  resetButtonText: {
-    color: Colors.primary,
-    fontSize: 16,
+  themeInfo: {
+    flex: 1,
+  },
+  themeName: {
+    fontSize: 18,
     fontWeight: "600",
+    color: Colors.text,
+  },
+  activeLabel: {
+    fontSize: 12,
+    color: Colors.primary,
+    marginTop: 2,
+  },
+  comingSoonCard: {
+    flexDirection: "row",
+    gap: 16,
+    backgroundColor: Colors.card,
+    padding: 20,
+    marginHorizontal: 16,
+    marginBottom: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  comingSoonContent: {
+    flex: 1,
+  },
+  comingSoonTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  comingSoonText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    lineHeight: 20,
   },
 });

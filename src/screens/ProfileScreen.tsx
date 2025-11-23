@@ -7,13 +7,22 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  TextInput,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../constants/colors";
 import { workoutLogStorage } from "../services/workoutLogStorage";
 import { useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const USER_NAME_KEY = "@user_name";
 
 export default function ProfileScreen({ navigation }: any) {
+  const [userName, setUserName] = useState("Athlete");
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [tempName, setTempName] = useState("");
+
   const [stats, setStats] = useState({
     totalWorkouts: 0,
     totalHours: 0,
@@ -23,18 +32,49 @@ export default function ProfileScreen({ navigation }: any) {
     thisWeekWorkouts: 0,
   });
 
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUserName();
+      calculateStats();
+    }, [])
+  );
+
+  const loadUserName = async () => {
+    try {
+      const name = await AsyncStorage.getItem(USER_NAME_KEY);
+      if (name) setUserName(name);
+    } catch (error) {
+      console.error("Error loading username:", error);
+    }
+  };
+
+  const saveUserName = async () => {
+    if (!tempName.trim()) {
+      Alert.alert("Error", "Please enter a name");
+      return;
+    }
+    try {
+      await AsyncStorage.setItem(USER_NAME_KEY, tempName.trim());
+      setUserName(tempName.trim());
+      setEditModalVisible(false);
+      setTempName("");
+    } catch (error) {
+      Alert.alert("Error", "Failed to save name");
+    }
+  };
+
+  const handleEditProfile = () => {
+    setTempName(userName);
+    setEditModalVisible(true);
+  };
+
   const calculateStats = async () => {
     try {
       const logs = await workoutLogStorage.getWorkoutLogs();
 
-      // Total workouts
       const totalWorkouts = logs.length;
-
-      // Total hours
       const totalSeconds = logs.reduce((sum, log) => sum + log.duration, 0);
       const totalHours = Math.round(totalSeconds / 3600);
-
-      // Total sets
       const totalSets = logs.reduce(
         (sum, log) =>
           sum +
@@ -45,13 +85,11 @@ export default function ProfileScreen({ navigation }: any) {
         0
       );
 
-      // Calculate streaks
       const sortedLogs = logs.sort(
         (a, b) => b.startTime.getTime() - a.startTime.getTime()
       );
       const { current, longest } = calculateStreaks(sortedLogs);
 
-      // This week's workouts
       const startOfWeek = new Date();
       startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
       startOfWeek.setHours(0, 0, 0, 0);
@@ -84,7 +122,6 @@ export default function ProfileScreen({ navigation }: any) {
     let tempStreak = 0;
     let checkDate = new Date(today);
 
-    // Check current streak
     for (const log of sortedLogs) {
       const logDate = new Date(log.startTime);
       logDate.setHours(0, 0, 0, 0);
@@ -102,7 +139,6 @@ export default function ProfileScreen({ navigation }: any) {
       }
     }
 
-    // Calculate longest streak
     const uniqueDates = [
       ...new Set(
         sortedLogs.map((log) => {
@@ -132,12 +168,6 @@ export default function ProfileScreen({ navigation }: any) {
     return { current: currentStreak, longest: longestStreak };
   };
 
-  useFocusEffect(
-    React.useCallback(() => {
-      calculateStats();
-    }, [])
-  );
-
   const menuItems = [
     {
       icon: "barbell-outline",
@@ -160,13 +190,6 @@ export default function ProfileScreen({ navigation }: any) {
       color: "#FFD700",
       onPress: () => Alert.alert("Coming Soon", "Personal records feature"),
     },
-    {
-      icon: "star-outline",
-      title: "Achievements",
-      subtitle: "Unlock workout milestones",
-      color: "#FF9F0A",
-      onPress: () => Alert.alert("Coming Soon", "Achievements feature"),
-    },
   ];
 
   return (
@@ -182,12 +205,15 @@ export default function ProfileScreen({ navigation }: any) {
           </View>
         </TouchableOpacity>
 
-        <Text style={styles.username}>Matia</Text>
-        <Text style={styles.email}>matia@workout.app</Text>
+        <Text style={styles.username}>{userName}</Text>
+        <Text style={styles.localBadge}>Local Profile</Text>
 
-        <TouchableOpacity style={styles.editProfileButton}>
+        <TouchableOpacity
+          style={styles.editProfileButton}
+          onPress={handleEditProfile}
+        >
           <Ionicons name="create-outline" size={18} color={Colors.primary} />
-          <Text style={styles.editProfileText}>Edit Profile</Text>
+          <Text style={styles.editProfileText}>Edit Name</Text>
         </TouchableOpacity>
       </View>
 
@@ -329,37 +355,49 @@ export default function ProfileScreen({ navigation }: any) {
             color={Colors.textTertiary}
           />
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => Alert.alert("About", "Workout Tracker v1.0.0")}
-        >
-          <View
-            style={[
-              styles.menuIcon,
-              { backgroundColor: Colors.textSecondary + "20" },
-            ]}
-          >
-            <Ionicons
-              name="information-circle-outline"
-              size={24}
-              color={Colors.textSecondary}
-            />
-          </View>
-          <View style={styles.menuContent}>
-            <Text style={styles.menuTitle}>About</Text>
-            <Text style={styles.menuSubtitle}>App version and info</Text>
-          </View>
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color={Colors.textTertiary}
-          />
-        </TouchableOpacity>
       </View>
 
       {/* Footer Spacing */}
       <View style={styles.footer} />
+
+      {/* Edit Name Modal */}
+      <Modal
+        visible={editModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Profile Name</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={tempName}
+              onChangeText={setTempName}
+              placeholder="Enter your name"
+              placeholderTextColor={Colors.textTertiary}
+              autoFocus
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setEditModalVisible(false);
+                  setTempName("");
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={saveUserName}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -411,9 +449,13 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: 4,
   },
-  email: {
-    fontSize: 14,
-    color: Colors.textSecondary,
+  localBadge: {
+    fontSize: 12,
+    color: Colors.textTertiary,
+    backgroundColor: Colors.card,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
     marginBottom: 16,
   },
   editProfileButton: {
@@ -576,5 +618,64 @@ const styles = StyleSheet.create({
   },
   footer: {
     height: 40,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: Colors.card,
+    borderRadius: 20,
+    padding: 24,
+    width: "100%",
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: Colors.text,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalInput: {
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: Colors.text,
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.text,
+  },
+  saveButton: {
+    backgroundColor: Colors.primary,
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.background,
   },
 });

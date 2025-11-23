@@ -21,7 +21,13 @@ export default function WorkoutLogDetailScreen({
   route,
   navigation,
 }: WorkoutLogDetailScreenProps) {
-  const { log } = route.params as { log: WorkoutLog };
+  // Deserialize dates from navigation params
+  const logParam = route.params.log as any;
+  const log: WorkoutLog = {
+    ...logParam,
+    startTime: new Date(logParam.startTime),
+    endTime: new Date(logParam.endTime),
+  };
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("en-US", {

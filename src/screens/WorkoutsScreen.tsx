@@ -42,11 +42,23 @@ export default function WorkoutsScreen({ navigation }: any) {
   );
 
   const handleWorkoutPress = (workout: Workout) => {
-    navigation.navigate("WorkoutDetail", { workout });
+    navigation.navigate("WorkoutDetail", {
+      workout: {
+        ...workout,
+        createdAt: workout.createdAt.toISOString(),
+        updatedAt: workout.updatedAt.toISOString(),
+      },
+    });
   };
 
   const handleStartWorkout = (workout: Workout) => {
-    navigation.navigate("ActiveWorkout", { workout });
+    navigation.navigate("ActiveWorkout", {
+      workout: {
+        ...workout,
+        createdAt: workout.createdAt.toISOString(),
+        updatedAt: workout.updatedAt.toISOString(),
+      },
+    });
   };
 
   const handleCreateWorkout = () => {

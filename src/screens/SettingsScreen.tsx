@@ -27,22 +27,20 @@ export default function SettingsScreen({ navigation }: any) {
     language: "en",
   });
 
-  const loadSettings = async () => {
-    try {
-      const data = await settingsStorage.getSettings();
-      if (data) {
-        setSettings(data);
-      }
-    } catch (error) {
-      console.error("Error loading settings:", error);
-    }
-  };
-
   useFocusEffect(
     React.useCallback(() => {
       loadSettings();
     }, [])
   );
+
+  const loadSettings = async () => {
+    try {
+      const data = await settingsStorage.getSettings();
+      setSettings(data);
+    } catch (error) {
+      console.error("Error loading settings:", error);
+    }
+  };
 
   const handleToggle = async (key: keyof AppSettings) => {
     try {
@@ -91,14 +89,6 @@ export default function SettingsScreen({ navigation }: any) {
     Alert.alert("Import Data", "Data import feature coming soon!");
   };
 
-  const handleRateApp = () => {
-    Alert.alert("Rate App", "Thank you for your support! ⭐");
-  };
-
-  const handleShareApp = () => {
-    Alert.alert("Share App", "Share with friends feature coming soon!");
-  };
-
   const settingsSections = [
     {
       title: "Appearance",
@@ -106,18 +96,17 @@ export default function SettingsScreen({ navigation }: any) {
       items: [
         {
           icon: "brush-outline",
-          label: "Theme Colors",
+          label: "Theme",
+          subtitle: "Grayscale (Default)",
           type: "navigation",
           onPress: () => navigation.navigate("ThemeSettings"),
         },
         {
-          icon: "moon-outline",
-          label: "Dark Mode",
-          type: "toggle",
-          value: settings.darkMode,
-          onToggle: () => handleToggle("darkMode"),
-          disabled: true,
-          subtitle: "Always enabled",
+          icon: "apps-outline",
+          label: "Navigation Icons",
+          subtitle: "Customize tab bar icons",
+          type: "navigation",
+          onPress: () => navigation.navigate("NavigationIconSettings"),
         },
       ],
     },
@@ -154,7 +143,7 @@ export default function SettingsScreen({ navigation }: any) {
           label: "Default Rest Time",
           subtitle: `${settings.defaultRestTime} seconds`,
           type: "navigation",
-          onPress: () => Alert.alert("Coming Soon", "Rest time customization"),
+          onPress: () => navigation.navigate("RestTimerSettings"),
         },
       ],
     },
@@ -196,14 +185,15 @@ export default function SettingsScreen({ navigation }: any) {
           label: "Language",
           subtitle: "English",
           type: "navigation",
-          onPress: () => Alert.alert("Coming Soon", "Language settings"),
+          onPress: () => navigation.navigate("LanguageSettings"),
         },
         {
           icon: "scale-outline",
           label: "Units",
-          subtitle: "Metric (kg)",
+          subtitle:
+            settings.units === "metric" ? "Metric (kg)" : "Imperial (lbs)",
           type: "navigation",
-          onPress: () => Alert.alert("Coming Soon", "Unit settings"),
+          onPress: () => navigation.navigate("UnitsSettings"),
         },
       ],
     },
@@ -232,48 +222,6 @@ export default function SettingsScreen({ navigation }: any) {
           type: "action",
           onPress: handleClearData,
           danger: true,
-        },
-      ],
-    },
-    {
-      title: "Support",
-      icon: "help-circle",
-      items: [
-        {
-          icon: "star-outline",
-          label: "Rate App",
-          subtitle: "Support us with a review",
-          type: "action",
-          onPress: handleRateApp,
-        },
-        {
-          icon: "share-social-outline",
-          label: "Share App",
-          subtitle: "Share with friends",
-          type: "action",
-          onPress: handleShareApp,
-        },
-        {
-          icon: "mail-outline",
-          label: "Contact Support",
-          subtitle: "Get help or send feedback",
-          type: "action",
-          onPress: () => Alert.alert("Contact", "support@workouttracker.com"),
-        },
-        {
-          icon: "shield-checkmark-outline",
-          label: "Privacy Policy",
-          subtitle: "How we handle your data",
-          type: "navigation",
-          onPress: () =>
-            Alert.alert("Privacy Policy", "Privacy policy content"),
-        },
-        {
-          icon: "document-text-outline",
-          label: "Terms of Service",
-          subtitle: "App usage terms",
-          type: "navigation",
-          onPress: () => Alert.alert("Terms", "Terms of service content"),
         },
       ],
     },
@@ -350,6 +298,7 @@ export default function SettingsScreen({ navigation }: any) {
         </View>
         <Text style={styles.appName}>Workout Tracker</Text>
         <Text style={styles.appVersion}>Version 1.0.0</Text>
+        <Text style={styles.appSubtext}>Local workout tracking app</Text>
       </View>
 
       {/* Settings Sections */}
@@ -378,8 +327,10 @@ export default function SettingsScreen({ navigation }: any) {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Made with 💪 by Matia</Text>
-        <Text style={styles.footerSubtext}>© 2024 Workout Tracker</Text>
+        <Text style={styles.footerText}>
+          All data stored locally on your device
+        </Text>
+        <Text style={styles.footerSubtext}>Made with 💪 by Matia</Text>
       </View>
     </ScrollView>
   );
@@ -419,6 +370,11 @@ const styles = StyleSheet.create({
   appVersion: {
     fontSize: 14,
     color: Colors.textSecondary,
+    marginBottom: 4,
+  },
+  appSubtext: {
+    fontSize: 12,
+    color: Colors.textTertiary,
   },
   section: {
     marginTop: 24,
@@ -486,7 +442,7 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
   },
   footerText: {
-    fontSize: 14,
+    fontSize: 13,
     color: Colors.textSecondary,
     marginBottom: 4,
   },

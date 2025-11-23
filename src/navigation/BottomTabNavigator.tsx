@@ -18,6 +18,11 @@ import ActiveWorkoutScreen from "../screens/ActiveWorkoutScreen";
 import ExerciseLibraryScreen from "../screens/ExerciseLibraryScreen";
 import ExerciseDetailScreen from "../screens/ExerciseDetailScreen";
 import AddCustomExerciseScreen from "../screens/AddCustomExerciseScreen";
+import RestTimerSettingsScreen from "../screens/RestTimerSettingsScreen";
+import UnitsSettingsScreen from "../screens/UnitsSettingsScreen";
+import LanguageSettingsScreen from "../screens/LanguageSettingsScreen";
+import AboutScreen from "../screens/AboutScreen";
+import NavigationIconSettingsScreen from "../screens/NavigationIconSettingsScreen";
 
 const Tab = createBottomTabNavigator();
 const ProfileStack = createStackNavigator();
@@ -54,7 +59,27 @@ function ProfileStackNavigator() {
       <ProfileStack.Screen
         name="ThemeSettings"
         component={ThemeSettingsScreen}
-        options={{ title: "Theme Colors" }}
+        options={{ title: "Theme" }}
+      />
+      <ProfileStack.Screen
+        name="NavigationIconSettings"
+        component={NavigationIconSettingsScreen}
+        options={{ title: "Navigation Icons" }}
+      />
+      <ProfileStack.Screen
+        name="RestTimerSettings"
+        component={RestTimerSettingsScreen}
+        options={{ title: "Rest Timer" }}
+      />
+      <ProfileStack.Screen
+        name="UnitsSettings"
+        component={UnitsSettingsScreen}
+        options={{ title: "Units" }}
+      />
+      <ProfileStack.Screen
+        name="LanguageSettings"
+        component={LanguageSettingsScreen}
+        options={{ title: "Language" }}
       />
       <ProfileStack.Screen
         name="ExerciseLibrary"

@@ -72,7 +72,14 @@ export default function WorkoutLogsScreen({ navigation }: any) {
   };
 
   const handleLogPress = (log: WorkoutLog) => {
-    navigation.navigate("WorkoutLogDetail", { log });
+    // Serialize dates before passing
+    navigation.navigate("WorkoutLogDetail", {
+      log: {
+        ...log,
+        startTime: log.startTime.toISOString(),
+        endTime: log.endTime.toISOString(),
+      },
+    });
   };
 
   // Group logs by date

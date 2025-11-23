@@ -15,7 +15,12 @@ import { Workout, ActiveExercise, ExerciseSet } from "../types";
 import { workoutLogStorage } from "../services/workoutLogStorage";
 
 export default function ActiveWorkoutScreen({ route, navigation }: any) {
-  const { workout } = route.params as { workout: Workout };
+  const workoutParam = route.params.workout as any;
+  const workout: Workout = {
+    ...workoutParam,
+    createdAt: new Date(workoutParam.createdAt),
+    updatedAt: new Date(workoutParam.updatedAt),
+  };
 
   const [startTime] = useState(new Date());
   const [elapsedSeconds, setElapsedSeconds] = useState(0);

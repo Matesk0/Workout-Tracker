@@ -21,10 +21,32 @@ export default function WorkoutDetailScreen({
   route,
   navigation,
 }: WorkoutDetailScreenProps) {
-  const { workout } = route.params as { workout: Workout };
+  // Deserialize dates
+  const workoutParam = route.params.workout as any;
+  const workout: Workout = {
+    ...workoutParam,
+    createdAt: new Date(workoutParam.createdAt),
+    updatedAt: new Date(workoutParam.updatedAt),
+  };
 
   const handleEdit = () => {
-    navigation.navigate("EditWorkout", { workout });
+    navigation.navigate("EditWorkout", {
+      workout: {
+        ...workout,
+        createdAt: workout.createdAt.toISOString(),
+        updatedAt: workout.updatedAt.toISOString(),
+      },
+    });
+  };
+
+  const handleStart = () => {
+    navigation.navigate("ActiveWorkout", {
+      workout: {
+        ...workout,
+        createdAt: workout.createdAt.toISOString(),
+        updatedAt: workout.updatedAt.toISOString(),
+      },
+    });
   };
 
   const handleDelete = () => {
@@ -49,10 +71,6 @@ export default function WorkoutDetailScreen({
         },
       ]
     );
-  };
-
-  const handleStart = () => {
-    navigation.navigate("ActiveWorkout", { workout });
   };
 
   const totalSets = workout.exercises.reduce((acc, ex) => acc + ex.sets, 0);

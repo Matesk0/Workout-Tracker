@@ -16,7 +16,13 @@ import AddExerciseModal from "../components/AddExerciseModal";
 import { workoutStorage } from "../services/workoutStorage";
 
 export default function EditWorkoutScreen({ route, navigation }: any) {
-  const { workout } = route.params as { workout: Workout };
+  // Deserialize dates from navigation params
+  const workoutParam = route.params.workout as any;
+  const workout: Workout = {
+    ...workoutParam,
+    createdAt: new Date(workoutParam.createdAt),
+    updatedAt: new Date(workoutParam.updatedAt),
+  };
 
   const [workoutName, setWorkoutName] = useState(workout.name);
   const [description, setDescription] = useState(workout.description || "");
@@ -45,6 +51,28 @@ export default function EditWorkoutScreen({ route, navigation }: any) {
         },
       ]
     );
+  };
+
+  const handleBrowseLibrary = () => {
+    setModalVisible(false);
+    // Navigate to exercise library with selection mode
+    setTimeout(() => {
+      navigation.navigate("ProfileMain");
+      setTimeout(() => {
+        navigation.navigate("ExerciseLibrary", {
+          selectionMode: true,
+          onSelectExercise: (exercise: any) => {
+            handleAddExercise({
+              name: exercise.name,
+              sets: 3,
+              reps: 10,
+              weight: undefined,
+              notes: undefined,
+            });
+          },
+        });
+      }, 100);
+    }, 100);
   };
 
   const handleSaveWorkout = async () => {
@@ -187,6 +215,7 @@ export default function EditWorkoutScreen({ route, navigation }: any) {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onAdd={handleAddExercise}
+        onBrowseLibrary={handleBrowseLibrary}
       />
     </View>
   );
@@ -328,6 +357,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: Colors.text,
+    color: Colors.background,
   },
 });
